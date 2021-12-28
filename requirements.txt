@@ -1,6 +1,4 @@
-psycopg[binary,pool]
-fastapi
-requests
-pydantic
-cryptography
-gunicorn
+psycopg==3.0.7
+fastapi==0.70.1
+pydantic==1.8.2
+cryptography==36.0.1
