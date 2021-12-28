@@ -385,6 +385,7 @@ def get_user_with_admin(aur: AdminUserRequest):
 
 # I created new "users" table for the signup function, i hope you like it so we can keep it for now
 
+
 @app.post("/api/get_user")  # TODO make a demo of gettting user without password and email
 def get_user(login: Login):  # get user, you must know the password in order to access it
 
