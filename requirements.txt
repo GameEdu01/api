@@ -1,0 +1,6 @@
+psycopg[binary,pool]
+fastapi
+requests
+pydantic
+cryptography
+gunicorn
