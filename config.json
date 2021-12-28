@@ -1,3 +1,16 @@
 {
-    "session_lenght": 10000
+    "session_lenght": 10000,
+    "descriptions": {
+        "get_root": "Check api's stability",
+        "change_nick": "Change user's nick, will only work with correct data passed in and working session",
+        "update_session_expire_date": "Updates session expire date, requires user to be active",
+        "new_session": "Creates a new session, only will work if current session expired",
+        "get_session": "Gets user's session, will work even if expired",
+        "set_user_active_with_session": "Sets user active if he is not, will only work if session is not expired",
+        "get_table": "Get any table from database, requires admin roots",
+        "get_user_with_admin": "Returns data of ANY user if you have admin access",
+        "get_user": "Returns user if correct password is given",
+        "get_user_demo": "Returns user just passing it's username. Removes personal info like password and session, e.t.c",
+        "signup": "Sign user up, heavy spelling security"
+    }
 }
