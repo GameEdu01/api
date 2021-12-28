@@ -228,12 +228,12 @@ class ChangeNick(Login):  # Login, but also with nickname
     nickname: str
 
 
-@app.post("/api/hello", response_description=config.configData["get_root"])  # Hello world!
+@app.post("/api/hello")  # Hello world!
 async def get_root():
     return {"Hello": "World!"}
 
 
-@app.post("/api/change_nick", response_description=config.configData["change_nick"])
+@app.post("/api/change_nick")
 async def change_nick(login: ChangeNick):  # Change user's nickname
 
     if not dbc.value_exists("users", login.username, "username"):
@@ -258,7 +258,7 @@ async def change_nick(login: ChangeNick):  # Change user's nickname
     return {"message": "{} nickname was changed to {}".format(login.username, login.nickname)}
 
 
-@app.post("/api/update_session_expire_date", response_description=config.configData["update_session_expire_date"])
+@app.post("/api/update_session_expire_date")
 async def update_session_expire_date(login: Login):
     if not dbc.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
@@ -278,7 +278,7 @@ async def update_session_expire_date(login: Login):
     return {"message": "session expire was updated"}
 
 
-@app.post("/api/new_session", response_description=config.configData["new_session"])
+@app.post("/api/new_session")
 async def new_session(login: LoginWithSession):
     if not dbc.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
@@ -299,7 +299,7 @@ async def new_session(login: LoginWithSession):
     return {"session": session}
 
 
-@app.post("/api/get_session", response_description=config.configData["get_session"])
+@app.post("/api/get_session")
 async def get_session(login: Login):
     if not dbc.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
@@ -314,7 +314,7 @@ async def get_session(login: Login):
     return {"session": user["session"]}
 
 
-@app.post("/api/set_user_active_with_session", response_description=config.configData["set_user_active_with_session"])
+@app.post("/api/set_user_active_with_session")
 async def set_user_active_with_session(login: LoginWithSession):
     if not dbc.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
@@ -332,7 +332,7 @@ async def set_user_active_with_session(login: LoginWithSession):
     return {"message": "Set active sucessfully!"}
 
 
-@app.post("/api/get_table", response_description=config.configData["get_table"])  # get table from the database by it's name
+@app.post("/api/table")  # get table from the database by it's name
 async def get_table(table_name: str, login: Login):
     if not dbc.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
@@ -354,7 +354,7 @@ async def get_table(table_name: str, login: Login):
     return dbc.get_table(table_name)
 
 
-@app.post("/api/get_user_with_admin", response_description=config.configData["get_user_with_admin"])
+@app.post("/api/get_user_with_admin")
 async def get_user_with_admin(aur: AdminUserRequest):
     if not dbc.value_exists("users", aur.username, "username"):
         return {"message": "This admin user does not exist"}
