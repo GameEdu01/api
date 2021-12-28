@@ -228,13 +228,13 @@ class ChangeNick(Login):  # Login, but also with nickname
     nickname: str
 
 
-@app.post("/api/hello")  # Hello world!
-def get_root():
+@app.post("/api/hello", response_description="Check api stability")  # Hello world!
+async def get_root():
     return {"Hello": "World!"}
 
 
 @app.post("/api/change_nick")
-def change_nick(login: ChangeNick):  # Change user's nickname
+async def change_nick(login: ChangeNick):  # Change user's nickname
 
     if not dbc.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
@@ -259,7 +259,7 @@ def change_nick(login: ChangeNick):  # Change user's nickname
 
 
 @app.post("/api/update_session_expire_date")
-def update_session_expire_date(login: Login):
+async def update_session_expire_date(login: Login):
     if not dbc.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
 
@@ -279,7 +279,7 @@ def update_session_expire_date(login: Login):
 
 
 @app.post("/api/new_session")
-def new_session(login: LoginWithSession):
+async def new_session(login: LoginWithSession):
     if not dbc.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
 
@@ -300,7 +300,7 @@ def new_session(login: LoginWithSession):
 
 
 @app.post("/api/get_session")
-def get_session(login: Login):
+async def get_session(login: Login):
     if not dbc.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
 
@@ -315,7 +315,7 @@ def get_session(login: Login):
 
 
 @app.post("/api/set_user_active_with_session")
-def set_user_active_with_session(login: LoginWithSession):
+async def set_user_active_with_session(login: LoginWithSession):
     if not dbc.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
 
@@ -333,7 +333,7 @@ def set_user_active_with_session(login: LoginWithSession):
 
 
 @app.post("/api/table")  # get table from the database by it's name
-def get_table(table_name: str, login: Login):
+async def get_table(table_name: str, login: Login):
     if not dbc.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
 
@@ -355,7 +355,7 @@ def get_table(table_name: str, login: Login):
 
 
 @app.post("/api/get_user_with_admin")
-def get_user_with_admin(aur: AdminUserRequest):
+async def get_user_with_admin(aur: AdminUserRequest):
     if not dbc.value_exists("users", aur.username, "username"):
         return {"message": "This admin user does not exist"}
 
@@ -387,7 +387,7 @@ def get_user_with_admin(aur: AdminUserRequest):
 
 
 @app.post("/api/get_user")  # TODO make a demo of gettting user without password and email
-def get_user(login: Login):  # get user, you must know the password in order to access it
+async def get_user(login: Login):  # get user, you must know the password in order to access it
 
     if not dbc.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
@@ -411,7 +411,7 @@ def get_user(login: Login):  # get user, you must know the password in order to 
 
 
 @app.post("/api/get_user_demo")
-def get_user_demo(username: str):
+async def get_user_demo(username: str):
     if not dbc.value_exists("users", username, "username"):
         return {"message": "This user does not exist"}
 
@@ -426,7 +426,7 @@ def get_user_demo(username: str):
 
 
 @app.post("/api/signup")  # basic syntax check
-def signup(signup: SignUp):
+async def signup(signup: SignUp):
     if " " in signup.email or not "@" in signup.email:
         return {"message": "Please use an appropriate email address"}
     if signup.email == "" or signup.password == "" or signup.username == "":
