@@ -250,7 +250,7 @@ async def signup(signup: SignUp):
             "token": token}
 
 
-@app.post("/api/wallet_signup")
+@app.post("/api/wallet_signup", response_description=config.configData["descriptions"]["wallet_signup"])
 async def wallet_signup(login: WalletSignUp):
 
     if not manager.check_spelling(login.name):

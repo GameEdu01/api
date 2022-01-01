@@ -11,6 +11,7 @@
         "get_user_with_admin": "Returns data of ANY user if you have admin access",
         "get_user": "Returns user if correct password is given",
         "get_user_demo": "Returns user just passing it's username. Removes personal info like password and session, e.t.c",
-        "signup": "Sign user up, heavy spelling security"
+        "signup": "Sign user up, heavy spelling security",
+        "wallet_signup": "Create wallet and sign it up to an existing email"
     }
 }
