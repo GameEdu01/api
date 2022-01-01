@@ -1,29 +1,12 @@
 from cryptography.fernet import Fernet
-from pydantic import BaseModel
 from fastapi import FastAPI
-import random
-import string
 import time
 import os
 
 from scr.dbconnector import DBConnector
 from scr.config import Config
 from scr.manager import Manager
-
-
-def get_secret(length, start):
-
-    secret = start
-    for i in range(length):
-        if not i == 0 and not i == length - 1:
-            if random.randint(1, 6) == 1:
-                secret += "."
-                continue
-        secret += random.choice(string.ascii_letters)
-
-    dt = time.time()
-
-    return secret, dt
+from scr.requset_form import *
 
 
 key = os.environ.get("SECRET_KEY").encode()  # Key used to encrypt secrets
@@ -36,36 +19,6 @@ db = DBConnector(dbname="d2d1ljqhqhl34q",
                  password=os.environ.get("DB_USER_PASSWORD"),
                  address=("ec2-54-161-164-220.compute-1.amazonaws.com", "5432"),
                  config=config)
-
-
-class Login(BaseModel):  # Login basic model
-    username: str
-    password: str
-
-
-class SignUp(Login):  # SignUp basic model
-    email: str
-
-
-class AdminUserRequest(Login):  # Admin any user request basic model
-    user_username: str
-
-
-class LoginWithSession(BaseModel):  # When you want to use your session
-    username: str
-    session: str
-
-
-class ChangeNick(Login):  # Login, but also with nickname
-    nickname: str
-
-
-class WalletSignUp(BaseModel):
-    name: str
-    surname: str
-    email: str
-    phone_number: str
-    password: str
 
 
 @app.post("/api/hello", response_description="Just to make sure api is working")  # Hello world!
@@ -133,7 +86,7 @@ async def new_session(login: LoginWithSession):
     if user["is_active"] and user["session_expire"] > time.time():
         return {"message": "You already have a working session! You can't make a new one until it expires"}
 
-    session, time_created = get_secret(30, "")
+    session, time_created = manager.get_secret(30, "")
     time_created += config.configData["session_length"]
 
     db.change_session(login.username, session, time_created)
@@ -288,8 +241,8 @@ async def signup(signup: SignUp):
 
     signup.password = fernet.encrypt(signup.password.encode()).decode()
 
-    token, _ = get_secret(60, "TTT")
-    session, time_created = get_secret(30, "")
+    token, _ = manager.get_secret(60, "TTT")
+    session, time_created = manager.get_secret(30, "")
 
     db.cursor.execute("""INSERT INTO users (username, password, email, token, is_superuser, session, session_expire, is_active, money, time_spent_on_website)
         VALUES ('{}', '{}', '{}', '{}', false, '{}', {}, true, 0, 0)""".format(signup.username, signup.password,
