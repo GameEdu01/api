@@ -1,4 +1,5 @@
 import psycopg as pg
+from psycopg.rows import dict_row
 
 
 class DBConnector:  # Connetion to the database class
@@ -11,7 +12,7 @@ class DBConnector:  # Connetion to the database class
         self.address = address
 
         self.conn = self.connect()
-        self.cursor = self.conn.cursor()
+        self.cursor = self.conn.cursor(row_factory=dict_row)
 
         self.queries = {"get_table": ["SELECT * FROM ", " ORDER BY id"],
                         "value_exists": ["SELECT EXISTS(SELECT 1 FROM ", " WHERE ", " = '", "')"],
@@ -35,64 +36,28 @@ class DBConnector:  # Connetion to the database class
 
         return conn
 
-    def get_table(self, tableName):  # get table from database by name, returns json
+    def get_table(self, table_name):  # get table from database by name, returns json
 
-        logins = []
-
-        queryRequestList = self.queries["get_table"]
-        query = queryRequestList[0] + tableName + queryRequestList[1]
+        query = "SELECT * FROM {}".format(table_name)
 
         self.cursor.execute(query)
-        records = self.cursor.fetchall()
 
-        queryRequestList = self.queries["get_columns"]
-        query = queryRequestList[0] + tableName + queryRequestList[1]
+        return self.cursor.fetchall()
 
-        self.cursor.execute(query)
-        columns = self.cursor.fetchall()
+    def value_exists(self, table_name, value, key):  # check if value exist in certain place
 
-        for row in records:
-            rowJson = {}
-            for i in range(len(row)):
-                rowJson[str(columns[i][0])] = (row[i])
-            logins.append(rowJson)
+        self.cursor.execute("SELECT EXISTS(SELECT 1 FROM {} WHERE {} = '{}')".format(table_name, key, value))
+        records = self.cursor.fetchone()
 
-        return logins
-
-    def value_exists(self, tableName, value, key):  # check if value exist in certain place
-
-        valueExists = False
-
-        queryRequestList = self.queries["value_exists"]
-        query = queryRequestList[0] + tableName + queryRequestList[1] + key + queryRequestList[2] + value + \
-                queryRequestList[3]
-
-        print(query)
-
-        self.cursor.execute(query)
-        valueExists = self.cursor.fetchall()[0][0]
-
-        return valueExists
+        return records["exists"]
 
     def get_user_data(self, username):  # get user from users by it's username
 
-        queryRequestList = self.queries["get_user"]
-        query = queryRequestList[0] + username + queryRequestList[1]
+        query = "SELECT * FROM users WHERE username = '{}'".format(username)
 
         self.cursor.execute(query)
-        userData = self.cursor.fetchall()[0]
-        userDataJson = {}
 
-        queryRequestList = self.queries["get_columns"]
-        query = queryRequestList[0] + "users" + queryRequestList[1]
-
-        self.cursor.execute(query)
-        columns = self.cursor.fetchall()
-
-        for i in range(len(userData)):
-            userDataJson[str(columns[i][0])] = userData[i]
-
-        return userDataJson
+        return self.cursor.fetchone()
 
     def update_session_expire(self, username):
 
@@ -100,8 +65,7 @@ class DBConnector:  # Connetion to the database class
 
         newSessionExpire = userData["session_expire"] + self.config.configData["session_lenght"]
 
-        queryRequestList = self.queries["update_session_expire"]
-        query = queryRequestList[0] + str(newSessionExpire) + queryRequestList[1] + username + queryRequestList[2]
+        query = "UPDATE users SET session_expire = {} WHERE username = '{}'".format(newSessionExpire, username)
 
         self.cursor.execute(query)
         self.conn.commit()
@@ -120,8 +84,7 @@ class DBConnector:  # Connetion to the database class
     def change_session(self, username, session, session_expire):
 
         self.cursor.execute("UPDATE users SET session = '{}' WHERE username = '{}'".format(session, username))
-        self.cursor.execute(
-            "UPDATE users SET session_expire = {} WHERE username = '{}'".format(session_expire, username))
+        self.cursor.execute("UPDATE users SET session_expire = {} WHERE username = '{}'".format(session_expire, username))
 
         self.conn.commit()
 
@@ -134,17 +97,12 @@ class DBConnector:  # Connetion to the database class
 
         return True
 
-    def check_spelling(self, message):
+    def signup_user(self, user):
 
-        is_ok = True
+        query = f"""INSERT INTO m_users(name, surname, email, phone_number)
+                        VALUES('{user.name}', '{user.surname}', '{user.email}', '{user.phone_number}')"""
 
-        if message == "":
-            is_ok = False
-        if " " in message:
-            is_ok = False
-        if "'" in message:
-            is_ok = False
-        if not message.isascii():
-            is_ok = False
+        self.cursor.execute(query)
+        self.conn.commit()
 
-        return is_ok
+        return True

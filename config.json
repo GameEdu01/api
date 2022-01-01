@@ -1,5 +1,5 @@
 {
-    "session_lenght": 10000,
+    "session_length": 10000,
     "descriptions": {
         "get_root": "Check api's stability",
         "change_nick": "Change user's nick, will only work with correct data passed in and working session",

@@ -1,16 +1,14 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
 from cryptography.fernet import Fernet
+from pydantic import BaseModel
+from fastapi import FastAPI
 import random
 import string
 import time
-from scr.dbconnector import DBConnector
-from scr.config import Config
 import os
 
-
-key = os.environ.get("SECRET_KEY").encode()  # Key used to encrypt secrets, will be hidden in the .env in future
-fernet = Fernet(key)
+from scr.dbconnector import DBConnector
+from scr.config import Config
+from scr.manager import Manager
 
 
 def get_secret(length, start):
@@ -28,10 +26,9 @@ def get_secret(length, start):
     return secret, dt
 
 
-# NOTE i am planning to make a single function instead of user_exists() and email_exists()
-# PS DONE
-
-
+key = os.environ.get("SECRET_KEY").encode()  # Key used to encrypt secrets
+fernet = Fernet(key)
+manager = Manager()
 config = Config("config.json")
 app = FastAPI()
 db = DBConnector(dbname="d2d1ljqhqhl34q",
@@ -50,7 +47,7 @@ class SignUp(Login):  # SignUp basic model
     email: str
 
 
-class AdminUserRequest(Login):  # Admin basic model
+class AdminUserRequest(Login):  # Admin any user request basic model
     user_username: str
 
 
@@ -63,9 +60,17 @@ class ChangeNick(Login):  # Login, but also with nickname
     nickname: str
 
 
-@app.post("/api/hello")  # Hello world!
+class WalletSignUp(BaseModel):
+    name: str
+    surname: str
+    email: str
+    phone_number: str
+
+
+@app.post("/api/hello", response_description="Just to make sure api is working")  # Hello world!
 async def get_root():
-    return {"Hello": "World!"}
+
+    return {"message": "Hello my guy!"}
 
 
 @app.post("/api/change_nick", response_description=config.configData["descriptions"]["change_nick"])
@@ -82,10 +87,10 @@ async def change_nick(login: ChangeNick):  # Change user's nickname
         return {"message": "Incorrect username or password"}
     if user["session_expire"] <= time.time():
         db.set_is_active(login.username, False)
-        return {"message": "This sesssion is expired, make a new session!"}
+        return {"message": "This session is expired, make a new session!"}
     if not user["is_active"]:
         return {"message": "This user is not active"}
-    if not db.check_spelling(login.nickname):
+    if not manager.check_spelling(login.nickname):
         return {"message": "Use an appropriate nickname"}
 
     db.change_nickname(login.username, login.nickname)
@@ -95,6 +100,7 @@ async def change_nick(login: ChangeNick):  # Change user's nickname
 
 @app.post("/api/update_session_expire_date", response_description=config.configData["descriptions"]["update_session_expire_date"])
 async def update_session_expire_date(login: Login):
+
     if not db.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
 
@@ -106,7 +112,7 @@ async def update_session_expire_date(login: Login):
         return {"message": "Incorrect username or password"}
     if user["session_expire"] <= time.time():
         db.set_is_active(login.username, False)
-        return {"message": "This sesssion is expired, make a new session!"}
+        return {"message": "This session is expired, make a new session!"}
 
     db.update_session_expire(login.username)
 
@@ -115,6 +121,7 @@ async def update_session_expire_date(login: Login):
 
 @app.post("/api/new_session", response_description=config.configData["descriptions"]["new_session"])
 async def new_session(login: LoginWithSession):
+
     if not db.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
 
@@ -123,19 +130,21 @@ async def new_session(login: LoginWithSession):
     if not user["session"] == login.session:
         return {"message": "This is not your current session!"}
     if user["is_active"] and user["session_expire"] > time.time():
-        return {"message": "You already have a working session! You can't make a new one untill it expires"}
+        return {"message": "You already have a working session! You can't make a new one until it expires"}
 
     session, time_created = get_secret(30, "")
-    time_created += config.configData["session_lenght"]
+    time_created += config.configData["session_length"]
 
     db.change_session(login.username, session, time_created)
     db.set_is_active(login.username, True)
 
-    return {"session": session}
+    return {"message": "new session created for user {}".format(login.username),
+            "session": session}
 
 
 @app.post("/api/get_session", response_description=config.configData["descriptions"]["get_session"])
 async def get_session(login: Login):
+
     if not db.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
 
@@ -146,11 +155,13 @@ async def get_session(login: Login):
     if not fernet.decrypt(user["password"].encode()).decode() == login.password:
         return {"message": "Incorrect username or password"}
 
-    return {"session": user["session"]}
+    return {"message": "session found",
+            "session": user["session"]}
 
 
 @app.post("/api/set_user_active_with_session", response_description=config.configData["descriptions"]["set_user_active_with_session"])
 async def set_user_active_with_session(login: LoginWithSession):
+
     if not db.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
 
@@ -164,11 +175,12 @@ async def set_user_active_with_session(login: LoginWithSession):
 
     db.set_is_active(login.username, True)
 
-    return {"message": "Set active sucessfully!"}
+    return {"message": "Set active successfully!"}
 
 
 @app.post("/api/get_table", response_description=config.configData["descriptions"]["get_table"])  # get table from the database by it's name
 async def get_table(table_name: str, login: Login):
+
     if not db.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
 
@@ -182,15 +194,17 @@ async def get_table(table_name: str, login: Login):
         return {"message": "This user is not a superuser, so he can't access it"}
     if user["session_expire"] <= time.time():
         db.set_is_active(login.username, False)
-        return {"message": "This sesssion is expired, make a new session!"}
+        return {"message": "This session is expired, make a new session!"}
     if not user["is_active"]:
         return {"message": "This user is not active"}
 
-    return db.get_table(table_name)
+    return {"message": "table sent",
+            "table": db.get_table(table_name)}
 
 
 @app.post("/api/get_user_with_admin", response_description=config.configData["descriptions"]["get_user_with_admin"])
 async def get_user_with_admin(aur: AdminUserRequest):
+
     if not db.value_exists("users", aur.username, "username"):
         return {"message": "This admin user does not exist"}
 
@@ -201,12 +215,12 @@ async def get_user_with_admin(aur: AdminUserRequest):
     if not fernet.decrypt(user["password"].encode()).decode() == aur.password:
         return {"message": "Incorrect admin username or password"}
     if not user["is_superuser"]:
-        return {"message": "You don't have access to this request!"}
+        return {"message": "You don't have access to this make this request!"}
     if user["session_expire"] <= time.time():
         db.set_is_active(aur.username, False)
-        return {"message": "This sesssion is expired, make a new session!"}
+        return {"message": "This session is expired, make a new session!"}
     if not user["is_active"]:
-        return {"message": "This user is not active"}
+        return {"message": "This admin user is not active"}
 
     if not db.value_exists("users", aur.user_username, "username"):
         return {"message": "This user does not exist"}
@@ -218,8 +232,6 @@ async def get_user_with_admin(aur: AdminUserRequest):
 
 # NOTE I've completely removed go api from this script
 
-# I created new "users" table for the signup function, i hope you like it so we can keep it for now
-
 
 @app.post("/api/get_user", response_description=config.configData["descriptions"]["get_user"])
 async def get_user(login: Login):  # get user, you must know the password in order to access it
@@ -229,16 +241,13 @@ async def get_user(login: Login):  # get user, you must know the password in ord
 
     user = db.get_user_data(login.username)
 
-    if user["session_expire"] <= time.time():
-        db.set_is_active(login.username, False)
-
     if not user:
         return {"message": "Incorrect username or password"}
     if not fernet.decrypt(user["password"].encode()).decode() == login.password:
         return {"message": "Incorrect username or password"}
     if user["session_expire"] <= time.time():
         db.set_is_active(login.username, False)
-        return {"message": "This sesssion is expired, make a new session!"}
+        return {"message": "This session is expired, make a new session!"}
     if not user["is_active"]:
         return {"message": "This user is not active"}
 
@@ -247,6 +256,7 @@ async def get_user(login: Login):  # get user, you must know the password in ord
 
 @app.post("/api/get_user_demo/{username}", response_description=config.configData["descriptions"]["get_user_demo"])
 async def get_user_demo(username: str):
+
     if not db.value_exists("users", username, "username"):
         return {"message": "This user does not exist"}
 
@@ -262,18 +272,13 @@ async def get_user_demo(username: str):
 
 @app.post("/api/signup", response_description=config.configData["descriptions"]["signup"])  # basic syntax check
 async def signup(signup: SignUp):
-    if " " in signup.email or not "@" in signup.email:
-        return {"message": "Please use an appropriate email address"}
-    if signup.email == "" or signup.password == "" or signup.username == "":
-        return {"message": "No empty fields!"}
-    if " " in signup.username:
-        return {"message": "Username can not contain spaces"}
-    if " " in signup.password:
-        return {"message": "Password can not contain spaces"}
-    if "'" in signup.password or "'" in signup.username or "'" in signup.email:
-        return {"message": "No special characters"}
-    if not signup.password.isascii() or not signup.email.isascii() or not signup.username.isascii():
-        return {"message": "No special characters"}
+
+    if not manager.check_spelling(signup.username):
+        return {"message": "check your spelling at username field"}
+    if not manager.check_spelling(signup.password):
+        return {"message": "check your spelling at password field"}
+    if not manager.check_spelling(signup.email, email=True):
+        return {"message": "check your spelling at email field"}
 
     userExists = db.value_exists("users", signup.username, "username")
     emailExists = db.value_exists("users", signup.email, "email")
@@ -288,13 +293,36 @@ async def signup(signup: SignUp):
     db.cursor.execute("""INSERT INTO users (username, password, email, token, is_superuser, session, session_expire, is_active, money, time_spent_on_website)
         VALUES ('{}', '{}', '{}', '{}', false, '{}', {}, true, 0, 0)""".format(signup.username, signup.password,
                                                                                signup.email, token, session,
-                                                                               time_created + config.configData[
-                                                                                                          "session_lenght"]))
+                                                                               time_created + config.configData["session_length"]))
 
     db.conn.commit()  # Session expire is a time.time() object, i think it's easier to work with it
 
     return {"message": f"{signup.username} was added to database",
             "token": token}
+
+
+@app.post("/api/wallet_signup")
+async def wallet_signup(user: WalletSignUp):
+
+    if not manager.check_spelling(user.name):
+        return {"message": "check your spelling at name field"}
+    if not manager.check_spelling(user.surname):
+        return {"message": "check your spelling at surname field"}
+    if not manager.check_spelling(user.email, email=True):
+        return {"message": "check your spelling at email field"}
+    if not manager.check_spelling(user.phone_number, phone_number=True):
+        return {"message": "check your spelling at phone_number field"}
+
+    if db.value_exists("m_users", user.email, "email"):
+        return {"message": "this email already exists"}
+    if db.value_exists("m_users", user.phone_number, "phone_number"):
+        return {"message": "this phone number already exists"}
+
+    db.signup_user(user)
+
+    return {"message": "user signed up successfully",
+            "first_name": user.name,
+            "last_name": user.surname}
 
 
 # before running, use
@@ -303,7 +331,7 @@ async def signup(signup: SignUp):
 # YOU MUST PULL WHOLE fastApi BRANCH IN ORDER FOR THIS TO WORK
 # Because i use other files with this script
 
-# If you want to run this script localy on your machine:
+# If you want to run this script locally on your machine:
 # uvicorn api:app --reload
 
 # Then go into http://127.0.0.1:8000/docs and you'll see the documentation
