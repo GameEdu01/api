@@ -65,6 +65,7 @@ class WalletSignUp(BaseModel):
     surname: str
     email: str
     phone_number: str
+    password: str
 
 
 @app.post("/api/hello", response_description="Just to make sure api is working")  # Hello world!
@@ -302,27 +303,42 @@ async def signup(signup: SignUp):
 
 
 @app.post("/api/wallet_signup")
-async def wallet_signup(user: WalletSignUp):
+async def wallet_signup(login: WalletSignUp):
 
-    if not manager.check_spelling(user.name):
+    if not manager.check_spelling(login.name):
         return {"message": "check your spelling at name field"}
-    if not manager.check_spelling(user.surname):
+    if not manager.check_spelling(login.surname):
         return {"message": "check your spelling at surname field"}
-    if not manager.check_spelling(user.email, email=True):
+    if not manager.check_spelling(login.email, email=True):
         return {"message": "check your spelling at email field"}
-    if not manager.check_spelling(user.phone_number, phone_number=True):
+    if not manager.check_spelling(login.phone_number, phone_number=True):
         return {"message": "check your spelling at phone_number field"}
 
-    if db.value_exists("m_users", user.email, "email"):
+    if not db.value_exists("users", login.email, "email"):
+        return {"message": "User with that email does not exist"}
+
+    if db.value_exists("m_users", login.email, "email"):
         return {"message": "this email already exists"}
-    if db.value_exists("m_users", user.phone_number, "phone_number"):
+    if db.value_exists("m_users", login.phone_number, "phone_number"):
         return {"message": "this phone number already exists"}
 
-    db.signup_user(user)
+    user = db.get_user_data(None, login.email)
+
+    if not user:
+        return {"message": "Incorrect username or password"}
+    if not fernet.decrypt(user["password"].encode()).decode() == login.password:
+        return {"message": "Incorrect username or password"}
+    if user["session_expire"] <= time.time():
+        db.set_is_active(user["username"], False)
+        return {"message": "This session is expired, make a new session!"}
+    if not user["is_active"]:
+        return {"message": "This user is not active"}
+
+    db.signup_user(login)
 
     return {"message": "user signed up successfully",
-            "first_name": user.name,
-            "last_name": user.surname}
+            "first_name": login.name,
+            "last_name": login.surname}
 
 
 # before running, use
