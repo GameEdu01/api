@@ -14,14 +14,6 @@ class DBConnector:  # Connetion to the database class
         self.conn = self.connect()
         self.cursor = self.conn.cursor(row_factory=dict_row)
 
-        self.queries = {"get_table": ["SELECT * FROM ", " ORDER BY id"],
-                        "value_exists": ["SELECT EXISTS(SELECT 1 FROM ", " WHERE ", " = '", "')"],
-                        "get_columns": [
-                            "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '",
-                            "'"],
-                        "get_user": ["SELECT * FROM users WHERE username = '", "'"],
-                        "update_session_expire": ["UPDATE users SET session_expire = ", " WHERE username = '", "'"]}
-
         self.config = config
 
     def connect(self):  # getting the connection
@@ -105,7 +97,19 @@ class DBConnector:  # Connetion to the database class
 
         return True
 
-    def signup_user(self, user):
+    def signup_user(self, user, token, session, time_created):
+
+        query = """INSERT INTO users (username, password, email, token, is_superuser, session, session_expire, is_active, money, time_spent_on_website)
+                VALUES ('{}', '{}', '{}', '{}', false, '{}', {}, true, 0, 0)""".format(user.username, user.password,
+                                                                                       user.email, token, session,
+                                                                                       time_created + self.config.configData["session_length"])
+
+        self.cursor.execute(query)
+        self.conn.commit()
+
+        return True
+
+    def signup_user_wallet(self, user):
 
         query = f"""INSERT INTO m_users(name, surname, email, phone_number)
                         VALUES('{user.name}', '{user.surname}', '{user.email}', '{user.phone_number}')"""

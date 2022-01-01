@@ -244,12 +244,7 @@ async def signup(signup: SignUp):
     token, _ = manager.get_secret(60, "TTT")
     session, time_created = manager.get_secret(30, "")
 
-    db.cursor.execute("""INSERT INTO users (username, password, email, token, is_superuser, session, session_expire, is_active, money, time_spent_on_website)
-        VALUES ('{}', '{}', '{}', '{}', false, '{}', {}, true, 0, 0)""".format(signup.username, signup.password,
-                                                                               signup.email, token, session,
-                                                                               time_created + config.configData["session_length"]))
-
-    db.conn.commit()  # Session expire is a time.time() object, i think it's easier to work with it
+    db.signup_user(signup, token, session, time_created)
 
     return {"message": f"{signup.username} was added to database",
             "token": token}
@@ -287,7 +282,7 @@ async def wallet_signup(login: WalletSignUp):
     if not user["is_active"]:
         return {"message": "This user is not active"}
 
-    db.signup_user(login)
+    db.signup_user_wallet(login)
 
     return {"message": "user signed up successfully",
             "first_name": login.name,
