@@ -48,7 +48,7 @@ class DBConnector:  # Connetion to the database class
         self.cursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(table_name, key, value))
         records = self.cursor.fetchone()
 
-        return records["exists"]
+        return records
 
     def get_user_data(self, username, email=None):  # get user from users by it's username
 

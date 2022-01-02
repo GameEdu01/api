@@ -30,6 +30,11 @@ async def get_root():
 @app.post("/api/change_nick", response_description=config.configData["descriptions"]["change_nick"])
 async def change_nick(login: ChangeNick):  # Change user's nickname
 
+    if not manager.check_spelling(login.username):
+        return {"message": "check your spelling at username field"}
+    if not manager.check_spelling(login.password):
+        return {"message": "check your spelling at password field"}
+
     if not db.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
 
@@ -55,6 +60,11 @@ async def change_nick(login: ChangeNick):  # Change user's nickname
 @app.post("/api/update_session_expire_date", response_description=config.configData["descriptions"]["update_session_expire_date"])
 async def update_session_expire_date(login: Login):
 
+    if not manager.check_spelling(login.username):
+        return {"message": "check your spelling at username field"}
+    if not manager.check_spelling(login.password):
+        return {"message": "check your spelling at password field"}
+
     if not db.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
 
@@ -75,6 +85,11 @@ async def update_session_expire_date(login: Login):
 
 @app.post("/api/new_session", response_description=config.configData["descriptions"]["new_session"])
 async def new_session(login: LoginWithSession):
+
+    if not manager.check_spelling(login.username):
+        return {"message": "check your spelling at username field"}
+    if not manager.check_spelling(login.session, email=True):
+        return {"message": "check your spelling at password field"}
 
     if not db.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
@@ -99,6 +114,11 @@ async def new_session(login: LoginWithSession):
 @app.post("/api/get_session", response_description=config.configData["descriptions"]["get_session"])
 async def get_session(login: Login):
 
+    if not manager.check_spelling(login.username):
+        return {"message": "check your spelling at username field"}
+    if not manager.check_spelling(login.password):
+        return {"message": "check your spelling at password field"}
+
     if not db.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
 
@@ -115,6 +135,11 @@ async def get_session(login: Login):
 
 @app.post("/api/set_user_active_with_session", response_description=config.configData["descriptions"]["set_user_active_with_session"])
 async def set_user_active_with_session(login: LoginWithSession):
+
+    if not manager.check_spelling(login.username):
+        return {"message": "check your spelling at username field"}
+    if not manager.check_spelling(login.session, email=True):
+        return {"message": "check your spelling at password field"}
 
     if not db.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
@@ -134,6 +159,11 @@ async def set_user_active_with_session(login: LoginWithSession):
 
 @app.post("/api/get_table", response_description=config.configData["descriptions"]["get_table"])  # get table from the database by it's name
 async def get_table(table_name: str, login: Login):
+
+    if not manager.check_spelling(login.username):
+        return {"message": "check your spelling at username field"}
+    if not manager.check_spelling(login.password):
+        return {"message": "check your spelling at password field"}
 
     if not db.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
@@ -158,6 +188,13 @@ async def get_table(table_name: str, login: Login):
 
 @app.post("/api/get_user_with_admin", response_description=config.configData["descriptions"]["get_user_with_admin"])
 async def get_user_with_admin(aur: AdminUserRequest):
+
+    if not manager.check_spelling(aur.username):
+        return {"message": "check your spelling at username field"}
+    if not manager.check_spelling(aur.password):
+        return {"message": "check your spelling at password field"}
+    if not manager.check_spelling(aur.user_username):
+        return {"message": "check your spelling at username field"}
 
     if not db.value_exists("users", aur.username, "username"):
         return {"message": "This admin user does not exist"}
@@ -190,6 +227,11 @@ async def get_user_with_admin(aur: AdminUserRequest):
 @app.post("/api/get_user", response_description=config.configData["descriptions"]["get_user"])
 async def get_user(login: Login):  # get user, you must know the password in order to access it
 
+    if not manager.check_spelling(signup.username):
+        return {"message": "check your spelling at username field"}
+    if not manager.check_spelling(signup.password):
+        return {"message": "check your spelling at password field"}
+
     if not db.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
 
@@ -210,6 +252,9 @@ async def get_user(login: Login):  # get user, you must know the password in ord
 
 @app.post("/api/get_user_demo/{username}", response_description=config.configData["descriptions"]["get_user_demo"])
 async def get_user_demo(username: str):
+
+    if not manager.check_spelling(username):
+        return {"message": "check your spelling at username field"}
 
     if not db.value_exists("users", username, "username"):
         return {"message": "This user does not exist"}
@@ -291,6 +336,13 @@ async def wallet_signup(login: WalletSignUp):
 
 @app.post("/api/get_wallet", response_description=config.configData["descriptions"]["get_user_wallet"])
 async def get_user_wallet(login: SignUp):
+
+    if not manager.check_spelling(login.username):
+        return {"message": "check your spelling at username field"}
+    if not manager.check_spelling(login.password):
+        return {"message": "check your spelling at password field"}
+    if not manager.check_spelling(login.email, email=True):
+        return {"message": "check your spelling at password field"}
 
     if not db.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
