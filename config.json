@@ -12,6 +12,7 @@
         "get_user": "Returns user if correct password is given",
         "get_user_demo": "Returns user just passing it's username. Removes personal info like password and session, e.t.c",
         "signup": "Sign user up, heavy spelling security",
-        "wallet_signup": "Create wallet and sign it up to an existing email"
+        "wallet_signup": "Create wallet and sign it up to an existing email",
+        "get_user_wallet": "Get user's wallet if exists"
     }
 }

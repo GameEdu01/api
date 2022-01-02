@@ -289,6 +289,35 @@ async def wallet_signup(login: WalletSignUp):
             "last_name": login.surname}
 
 
+@app.post("/api/get_wallet", response_description=config.configData["descriptions"]["get_user_wallet"])
+async def get_user_wallet(login: SignUp):
+
+    if not db.value_exists("users", login.username, "username"):
+        return {"message": "This user does not exist"}
+
+    user = db.get_user_data(login.username)
+
+    if not user:
+        return {"message": "Incorrect username or password"}
+    if not fernet.decrypt(user["password"].encode()).decode() == login.password:
+        return {"message": "Incorrect username or password"}
+    if user["session_expire"] <= time.time():
+        db.set_is_active(login.username, False)
+        return {"message": "This session is expired, make a new session!"}
+    if not user["is_active"]:
+        return {"message": "This user is not active"}
+
+    walletExists = db.value_exists("m_users", login.email, "email")
+
+    if not walletExists:
+        return {"message": "{} does not have a wallet connected".format(login.email)}
+
+    wallet = db.get_value_from_string("m_users", login.email, "email")
+
+    return {"message": "wallet was found",
+            "wallet": wallet}
+
+
 # before running, use
 # pip install -r requirements.txt
 

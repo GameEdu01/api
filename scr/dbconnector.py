@@ -43,6 +43,13 @@ class DBConnector:  # Connetion to the database class
 
         return records["exists"]
 
+    def get_value_from_string(self, table_name, value, key):  # check if value exist in certain place
+
+        self.cursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(table_name, key, value))
+        records = self.cursor.fetchone()
+
+        return records["exists"]
+
     def get_user_data(self, username, email=None):  # get user from users by it's username
 
         if email:
