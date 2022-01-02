@@ -89,7 +89,7 @@ async def new_session(login: LoginWithSession):
     if not manager.check_spelling(login.username):
         return {"message": "check your spelling at username field"}
     if not manager.check_spelling(login.session, email=True):
-        return {"message": "check your spelling at password field"}
+        return {"message": "check your spelling at session field"}
 
     if not db.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
@@ -139,7 +139,7 @@ async def set_user_active_with_session(login: LoginWithSession):
     if not manager.check_spelling(login.username):
         return {"message": "check your spelling at username field"}
     if not manager.check_spelling(login.session, email=True):
-        return {"message": "check your spelling at password field"}
+        return {"message": "check your spelling at session field"}
 
     if not db.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
@@ -194,7 +194,7 @@ async def get_user_with_admin(aur: AdminUserRequest):
     if not manager.check_spelling(aur.password):
         return {"message": "check your spelling at password field"}
     if not manager.check_spelling(aur.user_username):
-        return {"message": "check your spelling at username field"}
+        return {"message": "check your spelling at username you are looking for field"}
 
     if not db.value_exists("users", aur.username, "username"):
         return {"message": "This admin user does not exist"}
@@ -342,7 +342,7 @@ async def get_user_wallet(login: SignUp):
     if not manager.check_spelling(login.password):
         return {"message": "check your spelling at password field"}
     if not manager.check_spelling(login.email, email=True):
-        return {"message": "check your spelling at password field"}
+        return {"message": "check your spelling at email field"}
 
     if not db.value_exists("users", login.username, "username"):
         return {"message": "This user does not exist"}
