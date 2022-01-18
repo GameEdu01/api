@@ -7,6 +7,8 @@ from scr.config import Config
 from scr.manager import Manager
 from scr.request_form import *
 
+import hashlib
+
 
 manager = Manager()
 config = Config("config.json")
@@ -39,7 +41,8 @@ async def change_nick(login: ChangeNick):  # Change user's nickname
 
     if not user:
         return {"message": "Incorrect username or password"}
-    if not user["password"] == hash(login.password):
+    hashGot = hashlib.sha1(login.password.encode()).hexdigest()
+    if not user["password"] == hashGot:
         return {"message": "Incorrect username or password"}
     if user["session_expire"] <= time.time():
         db.set_is_active(login.username, False)
@@ -69,7 +72,8 @@ async def update_session_expire_date(login: Login):
 
     if not user:
         return {"message": "Incorrect username or password"}
-    if not user["password"] == hash(login.password):
+    hashGot = hashlib.sha1(login.password.encode()).hexdigest()
+    if not user["password"] == hashGot:
         return {"message": "Incorrect username or password"}
     if user["session_expire"] <= time.time():
         db.set_is_active(login.username, False)
@@ -123,7 +127,8 @@ async def get_session(login: Login):
 
     if not user:
         return {"message": "Incorrect username or password"}
-    if not user["password"] == hash(login.password):
+    hashGot = hashlib.sha1(login.password.encode()).hexdigest()
+    if not user["password"] == hashGot:
         return {"message": "Incorrect username or password"}
 
     return {"message": "session found",
@@ -169,7 +174,8 @@ async def get_table(table_name: str, login: Login):
 
     if not user:
         return {"message": "Incorrect username or password"}
-    if not user["password"] == hash(login.password):
+    hashGot = hashlib.sha1(login.password.encode()).hexdigest()
+    if not user["password"] == hashGot:
         return {"message": "Incorrect username or password"}
     if not user["is_superuser"]:
         return {"message": "This user is not a superuser, so he can't access it"}
@@ -200,8 +206,9 @@ async def get_user_with_admin(aur: AdminUserRequest):
 
     if not user:
         return {"message": "Incorrect admin username or password"}
-    if not user["password"] == hash(aur.password):
-        return {"message": "Incorrect admin username or password"}
+    hashGot = hashlib.sha1(aur.password.encode()).hexdigest()
+    if not user["password"] == hashGot:
+        return {"message": "Incorrect username or password"}
     if not user["is_superuser"]:
         return {"message": "You don't have access to this make this request!"}
     if user["session_expire"] <= time.time():
@@ -236,7 +243,8 @@ async def get_user(login: Login):  # get user, you must know the password in ord
 
     if not user:
         return {"message": "Incorrect username or password"}
-    if not user["password"] == hash(login.password):
+    hashGot = hashlib.sha1(login.password.encode()).hexdigest()
+    if not user["password"] == hashGot:
         return {"message": "Incorrect username or password"}
     if user["session_expire"] <= time.time():
         db.set_is_active(login.username, False)
@@ -281,7 +289,7 @@ async def signup(signup: SignUp):
     if userExists or emailExists:
         return {"message": "This username or email already exists!"}
 
-    signup.password = hash(signup.password)
+    signup.password = hashlib.sha1(signup.password.encode()).hexdigest()
 
     token, _ = manager.get_secret(60, "TTT")
     session, time_created = manager.get_secret(30, "")
@@ -316,7 +324,8 @@ async def wallet_signup(login: WalletSignUp):
 
     if not user:
         return {"message": "Incorrect username or password"}
-    if not user["password"] == hash(login.password):
+    hashGot = hashlib.sha1(login.password.encode()).hexdigest()
+    if not user["password"] == hashGot:
         return {"message": "Incorrect username or password"}
     if user["session_expire"] <= time.time():
         db.set_is_active(user["username"], False)
@@ -348,7 +357,8 @@ async def get_user_wallet(login: SignUp):
 
     if not user:
         return {"message": "Incorrect username or password"}
-    if not user["password"] == hash(login.password):
+    hashGot = hashlib.sha1(login.password.encode()).hexdigest()
+    if not user["password"] == hashGot:
         return {"message": "Incorrect username or password"}
     if user["session_expire"] <= time.time():
         db.set_is_active(login.username, False)
